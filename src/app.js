@@ -1,9 +1,10 @@
 const express = require('express')
 const cookieParser = require('cookie-parser');
+const jwt = require("jsonwebtoken");
 
 
-
-const appointmentRoutes = require('./router/appointment.router');
+const appointmentRouter = require('./router/appointment.router');
+const userRouter = require('./router/auth.router');
 
 const app = express();
 
@@ -44,17 +45,70 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api', appointmentRoutes);
 
+app.use('/api/appointment', appointmentRouter);
+app.use('/api/user', userRouter);
 
+// Auth helpers (root)
+app.get('/check-cookie', (req, res) => {
+  try {
+    const token = req.cookies?.token;
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return res.json({ role: decoded.role, id: decoded.id });
+  } catch (err) {
+    console.error('Error verifying token:', err.message);
+    return res
+      .status(401)
+      .json({ message: 'Unauthorized: Invalid or expired token' });
+  }
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'none',
+  });
+  res.json({ message: 'Logged out successfully!' });
+});
+
+// Auth helpers under /api for frontend consistency
+app.get('/api/check-cookie', (req, res) => {
+  try {
+    const token = req.cookies?.token;
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return res.json({ role: decoded.role, id: decoded.id });
+  } catch (err) {
+    console.error('Error verifying token:', err.message);
+    return res
+      .status(401)
+      .json({ message: 'Unauthorized: Invalid or expired token' });
+  }
+});
+
+app.post('/api/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'none',
+  });
+  res.json({ message: 'Logged out successfully!' });
+});
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to CSSE Project API!' });
+  res.json({ message: 'Welcome to GreenStep API!' });
 });
 
 app.get('/api', (req, res) => {
-  res.json({ message: 'CSSE API is running!' });
+  res.json({ message: 'GreenStep API is running!' });
 });
 
 app.use((req, res) => {
