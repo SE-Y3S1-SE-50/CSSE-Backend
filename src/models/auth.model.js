@@ -38,7 +38,7 @@ const registerDoctor = async (data) => {
     })
 
     const newUser = new User({
-      username: data.username,
+      userName: data.userName,
       password: hashedPassword,
       entityId: doctorId,
       role: "Doctor",
@@ -65,7 +65,7 @@ const registerPatient = async (data) => {
     })
 
     const newUser = new User({
-      username: data.username,
+      userName: data.userName,
       password: hashedPassword,
       entityId: patientId,
       role: "Patient",
@@ -93,11 +93,11 @@ const getAllUsers = async () => {
       try {
         if (role === 'Doctor') {
           details = await Doctor.findById(userId)
-            .select('username firstName lastName email phoneNumber gender entityId role createdTimestamp')
+            .select('userName firstName lastName email phoneNumber gender entityId role createdTimestamp')
             .lean();
         } else if (role === 'Patient') {
           details = await Patient.findById(userId)
-            .select('username firstName lastName email phoneNumber gender entityId role createdTimestamp')
+            .select('userName firstName lastName email phoneNumber gender entityId role createdTimestamp')
             .lean();
         } 
       } catch (err) {
@@ -147,7 +147,7 @@ const updateDoctor = async (doctorId, updatedData) => {
       return "User record for doctor not found";
     }
 
-    if (updatedData.username) user.username = updatedData.username;
+    if (updatedData.userName) user.userName = updatedData.userName;
     if (updatedData.password) {
       const hashedPassword = await bcrypt.hash(updatedData.password, 10);
       user.password = hashedPassword;
@@ -195,7 +195,7 @@ const updatePatient = async (patientId, updatedData) => {
       return "User record for patient not found";
     }
 
-    if (updatedData.username) user.username = updatedData.username;
+    if (updatedData.userName) user.userName = updatedData.userName;
     if (updatedData.password) {
       const hashedPassword = await bcrypt.hash(updatedData.password, 10);
       user.password = hashedPassword;

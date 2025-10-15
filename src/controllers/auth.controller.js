@@ -69,31 +69,15 @@ const httpGetAllUsers = async (req, res) => {
 
 
 
-
-
-const register = async (req, res) => {
-    
-    try {const {username, password, role} = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-
-        const newUser = new User({
-            username,
-            password: hashedPassword,
-            role
-        })
-        await newUser.save();
-        return res.status(201).json({message: 'User created successfully'})
-    } catch(err) {
-        return res.status(500).json({message: err})
-    }
-}
-
 const login = async (req, res) => {
-    try {const {username, password} = req.body;
-
-        const user = await User.findOne({username});
-
+    try {const {userName, password} = req.body;
+        if (!userName || !password) {
+            return res.status(400).json({message: 'Please provide username and password'})
+        }
+        console.log("userName", userName)
+        console.log("password", password)
+        const user = await User.findOne({userName});
+        console.log('User: ',user)
         if (!user) {
             return res.status(404).json({message: 'User not found'})
         }
@@ -127,7 +111,6 @@ const login = async (req, res) => {
 }
 
 module.exports = {
-    register,
     login, 
     httpRegisterDoctor,
     httpRegisterPatient,

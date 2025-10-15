@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const appointmentRouter = require('./router/appointment.router');
 const userRouter = require('./router/auth.router');
+const patientRouter = require('./router/patient.router');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 
 app.use('/api/appointment', appointmentRouter);
 app.use('/api/user', userRouter);
+app.use('/api/patient', patientRouter);
 
 // Auth helpers (root)
 app.get('/check-cookie', (req, res) => {
