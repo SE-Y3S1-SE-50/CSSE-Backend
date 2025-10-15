@@ -1,9 +1,7 @@
-
-
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    userName: {
+    userName: {  // Keep as userName (camelCase)
         type: String,
         required: true,
         unique: true   
@@ -23,9 +21,9 @@ const userSchema = new mongoose.Schema({
         enum: ['Patient', 'Doctor'],   
     },
     createdTimestamp: {
-        default: Date.now(),
-        type: Date
+        type: Date,
+        default: Date.now  // ✅ FIXED: Changed from Date.now() to Date.now
     }
-})
+});
 
 module.exports = mongoose.model('User', userSchema);

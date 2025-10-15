@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 
 const User = require("./users.model");
 const Doctor = require('./doctor.model');
-const Patient = require('./patient.model'); // ✅ ADDED
+const Patient = require('./patient.model');
 
 const createDoctor = async (doctorData) => {
   try {
@@ -16,7 +16,7 @@ const createDoctor = async (doctorData) => {
 
 const createPatient = async (patientData) => {
   try {
-    const newPatient = new Patient(patientData); // ✅ FIXED: Changed from Doctor to Patient
+    const newPatient = new Patient(patientData);
     await newPatient.save();
     return newPatient._id;
   } catch (err) {
@@ -26,6 +26,13 @@ const createPatient = async (patientData) => {
 
 const registerDoctor = async (data) => {
   try {
+    console.log("Register Doctor - Received data:", data);
+    
+    // ✅ Validate userName exists
+    if (!data.userName) {
+      throw new Error("userName is required");
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const doctorId = await createDoctor({
@@ -36,12 +43,16 @@ const registerDoctor = async (data) => {
       gender: data.gender
     });
 
+    console.log("Doctor created with ID:", doctorId);
+
     const newUser = new User({
-      userName: data.userName,
+      userName: data.userName,  // ✅ Make sure this is not undefined
       password: hashedPassword,
       entityId: doctorId,
       role: "Doctor",
     });
+
+    console.log("Creating user with userName:", newUser.userName);
 
     await newUser.save();
     return "User created successfully";
@@ -53,6 +64,13 @@ const registerDoctor = async (data) => {
 
 const registerPatient = async (data) => {
   try {
+    console.log("Register Patient - Received data:", data);
+    
+    // ✅ Validate userName exists
+    if (!data.userName) {
+      throw new Error("userName is required");
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const patientId = await createPatient({
@@ -63,12 +81,16 @@ const registerPatient = async (data) => {
       gender: data.gender
     });
 
+    console.log("Patient created with ID:", patientId);
+
     const newUser = new User({
-      userName: data.userName,
+      userName: data.userName,  // ✅ Make sure this is not undefined
       password: hashedPassword,
       entityId: patientId,
       role: "Patient",
     });
+
+    console.log("Creating user with userName:", newUser.userName);
 
     await newUser.save();
     return "User created successfully";
