@@ -1,9 +1,8 @@
-
-
 const bcrypt = require("bcryptjs");
 
 const User = require("./users.model");
-const Doctor = require('./doctor.model')
+const Doctor = require('./doctor.model');
+const Patient = require('./patient.model'); // ✅ ADDED
 
 const createDoctor = async (doctorData) => {
   try {
@@ -17,7 +16,7 @@ const createDoctor = async (doctorData) => {
 
 const createPatient = async (patientData) => {
   try {
-    const newPatient = new Doctor(patientData);
+    const newPatient = new Patient(patientData); // ✅ FIXED: Changed from Doctor to Patient
     await newPatient.save();
     return newPatient._id;
   } catch (err) {
@@ -30,12 +29,12 @@ const registerDoctor = async (data) => {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const doctorId = await createDoctor({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-        gender: data.gender
-    })
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      gender: data.gender
+    });
 
     const newUser = new User({
       userName: data.userName,
@@ -48,7 +47,7 @@ const registerDoctor = async (data) => {
     return "User created successfully";
   } catch (err) {
     console.log("Error in creating doctor", err);
-    return "Error in creating doctor user";
+    throw err;
   }
 };
 
@@ -57,12 +56,12 @@ const registerPatient = async (data) => {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const patientId = await createPatient({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-        gender: data.gender
-    })
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      gender: data.gender
+    });
 
     const newUser = new User({
       userName: data.userName,
@@ -75,31 +74,30 @@ const registerPatient = async (data) => {
     return "User created successfully";
   } catch (err) {
     console.log("Error in creating patient", err);
-    return "Error in creating patient user";
+    throw err;
   }
 };
-
 
 const getAllUsers = async () => {
   const users = await User.find({}).sort({ createdTimestamp: -1 }).lean();
 
   const populatedUsers = await Promise.all(
     users.map(async (user) => {
-      const role = user.role;      
-      const userId = user.entityId
+      const role = user.role;
+      const userId = user.entityId;
 
       let details = null;
-  
+
       try {
         if (role === 'Doctor') {
           details = await Doctor.findById(userId)
-            .select('userName firstName lastName email phoneNumber gender entityId role createdTimestamp')
+            .select('firstName lastName email phoneNumber gender createdTimestamp')
             .lean();
         } else if (role === 'Patient') {
           details = await Patient.findById(userId)
-            .select('userName firstName lastName email phoneNumber gender entityId role createdTimestamp')
+            .select('firstName lastName email phoneNumber gender createdTimestamp')
             .lean();
-        } 
+        }
       } catch (err) {
         console.error(`Error populating user ${user._id}:`, err);
       }
@@ -114,25 +112,20 @@ const getAllUsers = async () => {
   return populatedUsers;
 };
 
-
-
 const updateDoctor = async (doctorId, updatedData) => {
   try {
     const doctorUser = await User.findById(doctorId);
     if (!doctorUser) {
-      return "User not found";
+      throw new Error("User not found");
     }
-  
-    
-    doctorId = doctorUser.entityId;
 
-    const doctor = await Doctor.findById(doctorId);
+    const actualDoctorId = doctorUser.entityId;
+    const doctor = await Doctor.findById(actualDoctorId);
 
     if (!doctor) {
-      return "Doctor not found";
+      throw new Error("Doctor not found");
     }
 
-    
     if (updatedData.firstName) doctor.firstName = updatedData.firstName;
     if (updatedData.lastName) doctor.lastName = updatedData.lastName;
     if (updatedData.email) doctor.email = updatedData.email;
@@ -141,10 +134,9 @@ const updateDoctor = async (doctorId, updatedData) => {
 
     await doctor.save();
 
-    
-    const user = await User.findOne({ entityId: doctorId, role: "Doctor" });
+    const user = await User.findOne({ entityId: actualDoctorId, role: "Doctor" });
     if (!user) {
-      return "User record for doctor not found";
+      throw new Error("User record for doctor not found");
     }
 
     if (updatedData.userName) user.userName = updatedData.userName;
@@ -154,33 +146,27 @@ const updateDoctor = async (doctorId, updatedData) => {
     }
 
     await user.save();
-
-    
     return "Doctor updated successfully";
   } catch (err) {
     console.error("Error updating doctor:", err);
-    return "Error updating doctor";
+    throw err;
   }
 };
-  
 
 const updatePatient = async (patientId, updatedData) => {
   try {
     const patientUser = await User.findById(patientId);
     if (!patientUser) {
-      return "User not found";
+      throw new Error("User not found");
     }
-  
-    
-    patientId = patientUser.entityId;
 
-    const patient = await Patient.findById(patientId);
+    const actualPatientId = patientUser.entityId;
+    const patient = await Patient.findById(actualPatientId);
 
     if (!patient) {
-      return "Patient not found";
+      throw new Error("Patient not found");
     }
 
-    
     if (updatedData.firstName) patient.firstName = updatedData.firstName;
     if (updatedData.lastName) patient.lastName = updatedData.lastName;
     if (updatedData.email) patient.email = updatedData.email;
@@ -189,10 +175,9 @@ const updatePatient = async (patientId, updatedData) => {
 
     await patient.save();
 
-    
-    const user = await User.findOne({ entityId: patientId, role: "Patient" });
+    const user = await User.findOne({ entityId: actualPatientId, role: "Patient" });
     if (!user) {
-      return "User record for patient not found";
+      throw new Error("User record for patient not found");
     }
 
     if (updatedData.userName) user.userName = updatedData.userName;
@@ -202,23 +187,17 @@ const updatePatient = async (patientId, updatedData) => {
     }
 
     await user.save();
-
-    
     return "Patient updated successfully";
   } catch (err) {
     console.error("Error updating patient:", err);
-    return "Error updating patient";
+    throw err;
   }
 };
 
-
 module.exports = {
-
   registerDoctor,
-
+  registerPatient,
   getAllUsers,
   updateDoctor,
-  registerPatient,
   updatePatient
-
 };

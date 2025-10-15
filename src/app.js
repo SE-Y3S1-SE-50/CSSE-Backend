@@ -1,27 +1,21 @@
-const express = require('express')
+const express = require('express');
 const cookieParser = require('cookie-parser');
 const jwt = require("jsonwebtoken");
-
 
 const appointmentRouter = require('./router/appointment.router');
 const userRouter = require('./router/auth.router');
 const patientRouter = require('./router/patient.router');
+const doctorRouter = require('./router/doctor.router'); // ✅ ADDED
 
 const app = express();
-
-
-
-
 
 app.use(express.json());
 app.use(cookieParser());
 
 // CORS configuration - Allow all origins in development
 app.use((req, res, next) => {
-  // Get origin from request
   const origin = req.headers.origin;
   
-  // Allow the origin
   if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
   } else {
@@ -32,7 +26,6 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
   
-  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -40,18 +33,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Add request logging middleware
+// Request logging middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-
+// Routes
 app.use('/api/appointment', appointmentRouter);
 app.use('/api/user', userRouter);
 app.use('/api/patient', patientRouter);
+app.use('/api/doctor', doctorRouter); // ✅ ADDED
 
-// Auth helpers (root)
+// Auth helpers (root level)
 app.get('/check-cookie', (req, res) => {
   try {
     const token = req.cookies?.token;
@@ -63,9 +57,7 @@ app.get('/check-cookie', (req, res) => {
     return res.json({ role: decoded.role, id: decoded.id });
   } catch (err) {
     console.error('Error verifying token:', err.message);
-    return res
-      .status(401)
-      .json({ message: 'Unauthorized: Invalid or expired token' });
+    return res.status(401).json({ message: 'Unauthorized: Invalid or expired token' });
   }
 });
 
@@ -73,12 +65,12 @@ app.post('/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
   res.json({ message: 'Logged out successfully!' });
 });
 
-// Auth helpers under /api for frontend consistency
+// Auth helpers under /api (for consistency)
 app.get('/api/check-cookie', (req, res) => {
   try {
     const token = req.cookies?.token;
@@ -90,9 +82,7 @@ app.get('/api/check-cookie', (req, res) => {
     return res.json({ role: decoded.role, id: decoded.id });
   } catch (err) {
     console.error('Error verifying token:', err.message);
-    return res
-      .status(401)
-      .json({ message: 'Unauthorized: Invalid or expired token' });
+    return res.status(401).json({ message: 'Unauthorized: Invalid or expired token' });
   }
 });
 
@@ -100,24 +90,27 @@ app.post('/api/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
   res.json({ message: 'Logged out successfully!' });
 });
 
+// Root routes
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to GreenStep API!' });
+  res.json({ message: 'Welcome to Doctor Booking API!' });
 });
 
 app.get('/api', (req, res) => {
-  res.json({ message: 'GreenStep API is running!' });
+  res.json({ message: 'Doctor Booking API is running!' });
 });
 
+// 404 handler
 app.use((req, res) => {
   console.warn(`404 Error: ${req.method} ${req.url}`);
   res.status(404).json({ message: 'Route not found' });
 });
 
+// Error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled server error:', err.stack || err.message);
   res.status(500).json({ message: 'Internal Server Error' });
