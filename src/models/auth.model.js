@@ -33,20 +33,36 @@ const registerDoctor = async (data) => {
       throw new Error("userName is required");
     }
 
+    // ✅ Validate department and doctorId
+    if (!data.department) {
+      throw new Error("department is required");
+    }
+
+    if (!data.doctorId) {
+      throw new Error("doctorId is required");
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    // ✅ Create doctor with ALL fields including department info
     const doctorId = await createDoctor({
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
       phoneNumber: data.phoneNumber,
-      gender: data.gender
+      gender: data.gender,
+      doctorId: data.doctorId,
+      department: data.department,
+      specialization: data.specialization || '',
+      availableTimeSlots: data.availableTimeSlots || ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'],
+      workingDays: data.workingDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      isActive: true
     });
 
     console.log("Doctor created with ID:", doctorId);
 
     const newUser = new User({
-      userName: data.userName,  // ✅ Make sure this is not undefined
+      userName: data.userName,
       password: hashedPassword,
       entityId: doctorId,
       role: "Doctor",
@@ -55,7 +71,7 @@ const registerDoctor = async (data) => {
     console.log("Creating user with userName:", newUser.userName);
 
     await newUser.save();
-    return "User created successfully";
+    return "Doctor created successfully";
   } catch (err) {
     console.log("Error in creating doctor", err);
     throw err;
@@ -84,7 +100,7 @@ const registerPatient = async (data) => {
     console.log("Patient created with ID:", patientId);
 
     const newUser = new User({
-      userName: data.userName,  // ✅ Make sure this is not undefined
+      userName: data.userName,
       password: hashedPassword,
       entityId: patientId,
       role: "Patient",
@@ -93,7 +109,7 @@ const registerPatient = async (data) => {
     console.log("Creating user with userName:", newUser.userName);
 
     await newUser.save();
-    return "User created successfully";
+    return "Patient created successfully";
   } catch (err) {
     console.log("Error in creating patient", err);
     throw err;
@@ -113,7 +129,7 @@ const getAllUsers = async () => {
       try {
         if (role === 'Doctor') {
           details = await Doctor.findById(userId)
-            .select('firstName lastName email phoneNumber gender createdTimestamp')
+            .select('firstName lastName email phoneNumber gender doctorId department specialization createdTimestamp')
             .lean();
         } else if (role === 'Patient') {
           details = await Patient.findById(userId)
@@ -153,6 +169,10 @@ const updateDoctor = async (doctorId, updatedData) => {
     if (updatedData.email) doctor.email = updatedData.email;
     if (updatedData.phoneNumber) doctor.phoneNumber = updatedData.phoneNumber;
     if (updatedData.gender) doctor.gender = updatedData.gender;
+    if (updatedData.department) doctor.department = updatedData.department;
+    if (updatedData.specialization) doctor.specialization = updatedData.specialization;
+    if (updatedData.availableTimeSlots) doctor.availableTimeSlots = updatedData.availableTimeSlots;
+    if (updatedData.workingDays) doctor.workingDays = updatedData.workingDays;
 
     await doctor.save();
 

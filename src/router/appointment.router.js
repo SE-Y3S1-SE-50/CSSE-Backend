@@ -7,9 +7,10 @@ const {
   getAppointmentsByDoctor
 } = require('../controllers/appointment.controller');
 
-router.post('/appointments', createAppointment);
-router.get('/appointments', getAllAppointments);
-router.get('/appointments/patient/:email', getAppointmentsByPatient);
-router.get('/appointments/doctor/:doctorId', getAppointmentsByDoctor);
+// Note: Routes are prefixed with /api/appointment in app.js
+router.post('/', createAppointment);
+router.get('/', getAllAppointments);
+router.get('/patient/:email', getAppointmentsByPatient);
+router.get('/doctor/:doctorId', getAppointmentsByDoctor);
 
 module.exports = router;

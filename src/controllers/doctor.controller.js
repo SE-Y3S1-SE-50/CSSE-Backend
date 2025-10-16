@@ -41,9 +41,8 @@ const httpGetDoctorById = async (req, res) => {
   }
 };
 
-
 // Get all doctors
-exports.getAllDoctors = async (req, res) => {
+const getAllDoctors = async (req, res) => {
   try {
     const doctors = await Doctor.find({ isActive: true });
     res.status(200).json({ doctors });
@@ -54,7 +53,7 @@ exports.getAllDoctors = async (req, res) => {
 };
 
 // Get doctors by department
-exports.getDoctorsByDepartment = async (req, res) => {
+const getDoctorsByDepartment = async (req, res) => {
   try {
     const { department } = req.params;
     const doctors = await Doctor.find({ department, isActive: true });
@@ -66,7 +65,7 @@ exports.getDoctorsByDepartment = async (req, res) => {
 };
 
 // Get available time slots for a specific doctor
-exports.getAvailableSlots = async (req, res) => {
+const getAvailableSlots = async (req, res) => {
   try {
     const { doctorId } = req.params;
     const { date } = req.query;
@@ -101,7 +100,7 @@ exports.getAvailableSlots = async (req, res) => {
 };
 
 // Update existing doctor with appointment fields (Migration)
-exports.migrateDoctor = async (req, res) => {
+const migrateDoctor = async (req, res) => {
   try {
     const { email } = req.params;
     const { doctorId, department, specialization, availableTimeSlots, workingDays } = req.body;
@@ -133,7 +132,7 @@ exports.migrateDoctor = async (req, res) => {
 };
 
 // Seed initial doctors (for development/testing)
-exports.seedDoctors = async (req, res) => {
+const seedDoctors = async (req, res) => {
   try {
     const doctors = [
       {
@@ -198,6 +197,12 @@ exports.seedDoctors = async (req, res) => {
 };
 
 
+
 module.exports = {
-  httpGetDoctorById
+  httpGetDoctorById,
+  getAllDoctors,
+  getDoctorsByDepartment,
+  getAvailableSlots,
+  migrateDoctor,
+  seedDoctors
 };

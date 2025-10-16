@@ -6,7 +6,7 @@ const appointmentRouter = require('./router/appointment.router');
 const userRouter = require('./router/auth.router');
 const patientRouter = require('./router/patient.router');
 const doctorRouter = require('./router/doctor.router');
-const departmentRouter = require('./router/department.router'); // ✅ ADD THIS
+const departmentRouter = require('./router/department.router');
 
 const app = express();
 
@@ -45,10 +45,10 @@ app.use('/api/appointment', appointmentRouter);
 app.use('/api/user', userRouter);
 app.use('/api/patient', patientRouter);
 app.use('/api/doctor', doctorRouter);
-app.use('/api/department', departmentRouter); // ✅ ADD THIS
+app.use('/api/department', departmentRouter);
 
-// Auth helpers
-app.get('/check-cookie', (req, res) => {
+// Auth helpers - moved to /api prefix for consistency
+app.get('/api/check-cookie', (req, res) => {
   try {
     const token = req.cookies?.token;
     if (!token) {
@@ -63,7 +63,7 @@ app.get('/check-cookie', (req, res) => {
   }
 });
 
-app.post('/logout', (req, res) => {
+app.post('/api/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

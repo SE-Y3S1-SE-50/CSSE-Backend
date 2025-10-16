@@ -38,3 +38,38 @@ exports.seedDepartments = async (req, res) => {
     res.status(500).json({ error: 'Server error while seeding departments.' });
   }
 };
+
+// Add this to src/controllers/department.controller.js
+
+// Create a new department
+exports.createDepartment = async (req, res) => {
+  try {
+    const { name, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Department name is required.' });
+    }
+
+    // Check if department already exists
+    const existing = await Department.findOne({ name });
+    if (existing) {
+      return res.status(409).json({ error: 'Department already exists.' });
+    }
+
+    const department = new Department({
+      name,
+      description: description || '',
+      isActive: true
+    });
+
+    await department.save();
+
+    res.status(201).json({ 
+      message: 'Department created successfully!', 
+      department 
+    });
+  } catch (err) {
+    console.error('Error creating department:', err);
+    res.status(500).json({ error: 'Server error while creating department.' });
+  }
+};
