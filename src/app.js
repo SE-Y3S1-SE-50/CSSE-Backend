@@ -5,14 +5,15 @@ const jwt = require("jsonwebtoken");
 const appointmentRouter = require('./router/appointment.router');
 const userRouter = require('./router/auth.router');
 const patientRouter = require('./router/patient.router');
-const doctorRouter = require('./router/doctor.router'); // ✅ ADDED
+const doctorRouter = require('./router/doctor.router');
+const departmentRouter = require('./router/department.router'); // ✅ ADD THIS
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS configuration - Allow all origins in development
+// CORS configuration
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
@@ -33,7 +34,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request logging middleware
+// Request logging
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
@@ -43,9 +44,10 @@ app.use((req, res, next) => {
 app.use('/api/appointment', appointmentRouter);
 app.use('/api/user', userRouter);
 app.use('/api/patient', patientRouter);
-app.use('/api/doctor', doctorRouter); // ✅ ADDED
+app.use('/api/doctor', doctorRouter);
+app.use('/api/department', departmentRouter); // ✅ ADD THIS
 
-// Auth helpers (root level)
+// Auth helpers
 app.get('/check-cookie', (req, res) => {
   try {
     const token = req.cookies?.token;
@@ -62,31 +64,6 @@ app.get('/check-cookie', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-  });
-  res.json({ message: 'Logged out successfully!' });
-});
-
-// Auth helpers under /api (for consistency)
-app.get('/api/check-cookie', (req, res) => {
-  try {
-    const token = req.cookies?.token;
-    if (!token) {
-      return res.status(401).json({ message: 'Unauthorized: No token provided' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return res.json({ role: decoded.role, id: decoded.id });
-  } catch (err) {
-    console.error('Error verifying token:', err.message);
-    return res.status(401).json({ message: 'Unauthorized: Invalid or expired token' });
-  }
-});
-
-app.post('/api/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
