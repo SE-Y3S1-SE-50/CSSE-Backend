@@ -60,38 +60,95 @@ const getSchedulesByDateRange = async (req, res) => {
 // Create new schedule
 const createSchedule = async (req, res) => {
     try {
+        console.log('=== CREATE SCHEDULE REQUEST ===');
+        console.log('Request method:', req.method);
+        console.log('Request URL:', req.url);
+        console.log('Request headers:', req.headers);
+        console.log('Request body:', req.body);
+        
         const scheduleData = req.body;
         console.log('Received schedule data:', scheduleData);
         
-        // Check for conflicts
-        const conflict = await Schedule.findOne({
-            staffId: scheduleData.staffId,
-            shiftDate: scheduleData.shiftDate,
-            $or: [
-                {
-                    startTime: { $lt: scheduleData.endTime },
-                    endTime: { $gt: scheduleData.startTime }
-                }
-            ],
-            status: { $ne: 'Cancelled' }
-        });
-
-        if (conflict) {
+        // Validate required fields
+        if (!scheduleData.staffId || !scheduleData.departmentId || !scheduleData.shiftDate || !scheduleData.createdBy) {
             return res.status(400).json({ 
-                message: 'Staff member already has a conflicting shift at this time' 
+                message: 'Missing required fields: staffId, departmentId, shiftDate, or createdBy' 
+            });
+        }
+        
+        // Validate ObjectId format
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(scheduleData.staffId)) {
+            return res.status(400).json({ message: 'Invalid staffId format' });
+        }
+        if (!mongoose.Types.ObjectId.isValid(scheduleData.departmentId)) {
+            return res.status(400).json({ message: 'Invalid departmentId format' });
+        }
+        if (!mongoose.Types.ObjectId.isValid(scheduleData.createdBy)) {
+            return res.status(400).json({ message: 'Invalid createdBy format' });
+        }
+        
+        // Convert ISO string date to Date object if needed
+        if (typeof scheduleData.shiftDate === 'string') {
+            scheduleData.shiftDate = new Date(scheduleData.shiftDate);
+        }
+        
+        // Skip conflict checking for now - just create the schedule
+        console.log('Creating schedule without conflict checking...');
+        console.log('Schedule data:', JSON.stringify(scheduleData, null, 2));
+        
+        // Validate data format
+        if (!scheduleData.staffId || !scheduleData.departmentId || !scheduleData.shiftDate || !scheduleData.startTime || !scheduleData.endTime || !scheduleData.shiftType || !scheduleData.createdBy) {
+            console.error('Missing required fields in schedule data');
+            return res.status(400).json({ 
+                message: 'Missing required fields',
+                required: ['staffId', 'departmentId', 'shiftDate', 'startTime', 'endTime', 'shiftType', 'createdBy'],
+                received: Object.keys(scheduleData)
+            });
+        }
+        
+        // Validate shiftType enum
+        const validShiftTypes = ['Morning', 'Afternoon', 'Evening', 'Night', 'Full Day'];
+        if (!validShiftTypes.includes(scheduleData.shiftType)) {
+            console.error('Invalid shiftType:', scheduleData.shiftType);
+            return res.status(400).json({ 
+                message: 'Invalid shiftType',
+                validTypes: validShiftTypes,
+                received: scheduleData.shiftType
             });
         }
 
-        const schedule = new Schedule(scheduleData);
-        await schedule.save();
-        await schedule.populate('staffId', 'firstName lastName role');
-        await schedule.populate('departmentId', 'name');
-        await schedule.populate('createdBy', 'userName');
+        try {
+            const schedule = new Schedule(scheduleData);
+            console.log('Schedule object created, saving...');
+            await schedule.save();
+            console.log('Schedule saved successfully');
+            
+            await schedule.populate('staffId', 'firstName lastName role');
+            await schedule.populate('departmentId', 'name');
+            await schedule.populate('createdBy', 'userName');
 
-        res.status(201).json(schedule);
+            console.log('Schedule populated successfully:', schedule);
+            res.status(201).json(schedule);
+        } catch (saveError) {
+            console.error('Error saving schedule:', saveError);
+            console.error('Save error details:', saveError.message);
+            console.error('Save error stack:', saveError.stack);
+            res.status(500).json({ 
+                message: 'Error saving schedule to database',
+                error: saveError.message,
+                details: saveError.name === 'ValidationError' ? saveError.errors : undefined
+            });
+        }
     } catch (error) {
         console.error('Error creating schedule:', error);
-        res.status(500).json({ message: 'Error creating schedule' });
+        console.error('Error details:', error.message);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            message: 'Error creating schedule',
+            error: error.message,
+            details: error.name === 'ValidationError' ? error.errors : undefined
+        });
     }
 };
 

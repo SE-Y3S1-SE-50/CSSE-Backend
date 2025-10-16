@@ -145,6 +145,207 @@ async function seedData() {
           { dayOfWeek: 'Thursday', startTime: '06:00', endTime: '14:00', isAvailable: true },
           { dayOfWeek: 'Friday', startTime: '06:00', endTime: '14:00', isAvailable: true }
         ]
+      },
+      // Additional Emergency Department Staff
+      {
+        firstName: 'David',
+        lastName: 'Martinez',
+        email: 'david.martinez@medicare.com',
+        phoneNumber: '555-0107',
+        role: 'Doctor',
+        department: departments[0]._id, // Emergency
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '20:00', endTime: '08:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '20:00', endTime: '08:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '20:00', endTime: '08:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '20:00', endTime: '08:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '20:00', endTime: '08:00', isAvailable: true }
+        ]
+      },
+      {
+        firstName: 'Sarah',
+        lastName: 'Johnson',
+        email: 'sarah.johnson@medicare.com',
+        phoneNumber: '555-0108',
+        role: 'Nurse',
+        department: departments[0]._id, // Emergency
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '14:00', endTime: '22:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '14:00', endTime: '22:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '14:00', endTime: '22:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '14:00', endTime: '22:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '14:00', endTime: '22:00', isAvailable: true }
+        ]
+      },
+      // Additional Cardiology Staff
+      {
+        firstName: 'Dr. James',
+        lastName: 'Thompson',
+        email: 'james.thompson@medicare.com',
+        phoneNumber: '555-0109',
+        role: 'Doctor',
+        department: departments[1]._id, // Cardiology
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '08:00', endTime: '16:00', isAvailable: true }
+        ]
+      },
+      {
+        firstName: 'Maria',
+        lastName: 'Garcia',
+        email: 'maria.garcia@medicare.com',
+        phoneNumber: '555-0110',
+        role: 'Technician',
+        department: departments[1]._id, // Cardiology
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '09:00', endTime: '17:00', isAvailable: true }
+        ]
+      },
+      // Additional Pediatrics Staff
+      {
+        firstName: 'Dr. Jennifer',
+        lastName: 'Lee',
+        email: 'jennifer.lee@medicare.com',
+        phoneNumber: '555-0111',
+        role: 'Doctor',
+        department: departments[2]._id, // Pediatrics
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '09:00', endTime: '17:00', isAvailable: true }
+        ]
+      },
+      {
+        firstName: 'Kevin',
+        lastName: 'White',
+        email: 'kevin.white@medicare.com',
+        phoneNumber: '555-0112',
+        role: 'Nurse',
+        department: departments[2]._id, // Pediatrics
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '07:00', endTime: '15:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '07:00', endTime: '15:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '07:00', endTime: '15:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '07:00', endTime: '15:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '07:00', endTime: '15:00', isAvailable: true }
+        ]
+      },
+      // Additional Surgery Staff
+      {
+        firstName: 'Dr. Michael',
+        lastName: 'Chen',
+        email: 'michael.chen@medicare.com',
+        phoneNumber: '555-0113',
+        role: 'Doctor',
+        department: departments[3]._id, // Surgery
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '07:00', endTime: '15:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '07:00', endTime: '15:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '07:00', endTime: '15:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '07:00', endTime: '15:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '07:00', endTime: '15:00', isAvailable: true }
+        ]
+      },
+      {
+        firstName: 'Amanda',
+        lastName: 'Taylor',
+        email: 'amanda.taylor@medicare.com',
+        phoneNumber: '555-0114',
+        role: 'Technician',
+        department: departments[3]._id, // Surgery
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '08:00', endTime: '16:00', isAvailable: true }
+        ]
+      },
+      // Additional Radiology Staff
+      {
+        firstName: 'Dr. Patricia',
+        lastName: 'Williams',
+        email: 'patricia.williams@medicare.com',
+        phoneNumber: '555-0115',
+        role: 'Doctor',
+        department: departments[4]._id, // Radiology
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '08:00', endTime: '16:00', isAvailable: true }
+        ]
+      },
+      {
+        firstName: 'Christopher',
+        lastName: 'Brown',
+        email: 'christopher.brown@medicare.com',
+        phoneNumber: '555-0116',
+        role: 'Technician',
+        department: departments[4]._id, // Radiology
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '10:00', endTime: '18:00', isAvailable: true }
+        ]
+      },
+      // Additional Support Staff
+      {
+        firstName: 'Rachel',
+        lastName: 'Davis',
+        email: 'rachel.davis@medicare.com',
+        phoneNumber: '555-0117',
+        role: 'Receptionist',
+        department: departments[0]._id, // Emergency
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '06:00', endTime: '14:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '06:00', endTime: '14:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '06:00', endTime: '14:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '06:00', endTime: '14:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '06:00', endTime: '14:00', isAvailable: true }
+        ]
+      },
+      {
+        firstName: 'Daniel',
+        lastName: 'Miller',
+        email: 'daniel.miller@medicare.com',
+        phoneNumber: '555-0118',
+        role: 'Manager',
+        department: departments[1]._id, // Cardiology
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '08:00', endTime: '16:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '08:00', endTime: '16:00', isAvailable: true }
+        ]
+      },
+      {
+        firstName: 'Jessica',
+        lastName: 'Wilson',
+        email: 'jessica.wilson@medicare.com',
+        phoneNumber: '555-0119',
+        role: 'Nurse',
+        department: departments[4]._id, // Radiology
+        availability: [
+          { dayOfWeek: 'Monday', startTime: '12:00', endTime: '20:00', isAvailable: true },
+          { dayOfWeek: 'Tuesday', startTime: '12:00', endTime: '20:00', isAvailable: true },
+          { dayOfWeek: 'Wednesday', startTime: '12:00', endTime: '20:00', isAvailable: true },
+          { dayOfWeek: 'Thursday', startTime: '12:00', endTime: '20:00', isAvailable: true },
+          { dayOfWeek: 'Friday', startTime: '12:00', endTime: '20:00', isAvailable: true }
+        ]
       }
     ]);
     console.log('Created staff members');
