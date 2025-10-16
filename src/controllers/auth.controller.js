@@ -1,4 +1,7 @@
 const User = require('../models/users.model');
+const Patient = require('../models/patient.model');
+const Doctor = require('../models/doctor.model');
+const Admin = require('../models/admin.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const {
@@ -63,6 +66,20 @@ const httpGetAllUsers = async (req, res) => {
   }
 };
 
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Password validation helper
+const isValidPassword = (password) => {
+  return password && password.length >= 8;
+};
+
+/**
+ * UNIFIED LOGIN - Works for Patient, Doctor, and Admin
+ * Returns role to frontend for routing
+ */
 const login = async (req, res) => {
   try {
     const { userName, password } = req.body;
@@ -71,47 +88,81 @@ const login = async (req, res) => {
       return res.status(400).json({ message: 'Please provide username and password' });
     }
 
-    console.log("userName:", userName);
-    console.log("password:", password);
+    console.log("Login attempt for userName:", userName);
+
 
     const user = await User.findOne({ userName });
-    console.log('User:', user);
-
+    
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(401).json({ message: 'Invalid username or password' });
     }
+
+    console.log('User found:', { id: user._id, role: user.role });
+
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+
+    let entityDetails = null;
+    try {
+      switch (user.role) {
+        case 'Patient':
+          entityDetails = await Patient.findById(user.entityId).select('firstName lastName email');
+          break;
+        case 'Doctor':
+          entityDetails = await Doctor.findById(user.entityId).select('firstName lastName email department');
+          break;
+        case 'Admin':
+          entityDetails = await Admin.findById(user.entityId).select('firstName lastName email position');
+          break;
+        default:
+          console.warn('Unknown role:', user.role);
+      }
+    } catch (err) {
+      console.error('Error fetching entity details:', err);
     }
 
     const token = jwt.sign(
       {
         id: user._id,
-        role: user.role
+        role: user.role,
+        entityId: user.entityId
       },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '24h' }
     );
+
 
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 3600000
+      maxAge: 24 * 60 * 60 * 1000  
     });
+
 
     return res.status(200).json({
       message: "Login successful",
-      role: user.role
+      role: user.role,              
+      userId: user._id,
+      entityId: user.entityId,
+      user: entityDetails || {
+        firstName: 'User',
+        lastName: '',
+        email: userName
+      }
     });
+
   } catch (err) {
-    console.log("Login error:", err);
-    return res.status(500).json({ message: err.message || 'Server error' });
+    console.error("Login error:", err);
+    return res.status(500).json({ message: 'Server error during login' });
   }
 };
+
 
 module.exports = {
   login,
