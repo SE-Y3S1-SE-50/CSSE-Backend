@@ -7,6 +7,9 @@ const userRouter = require('./router/auth.router');
 const patientRouter = require('./router/patient.router');
 const doctorRouter = require('./router/doctor.router');
 const departmentRouter = require('./router/department.router');
+const staffRouter = require('./router/staff.router');
+const scheduleRouter = require('./router/schedule.router');
+const adminRouter = require('./router/admin.router');
 
 const app = express();
 
@@ -46,6 +49,9 @@ app.use('/api/user', userRouter);
 app.use('/api/patient', patientRouter);
 app.use('/api/doctor', doctorRouter);
 app.use('/api/department', departmentRouter);
+app.use('/api/staff', staffRouter);
+app.use('/api/schedule', scheduleRouter);
+app.use('/api/admin', adminRouter);
 
 // Auth helpers - moved to /api prefix for consistency
 app.get('/api/check-cookie', (req, res) => {
