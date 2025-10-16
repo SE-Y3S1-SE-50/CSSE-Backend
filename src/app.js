@@ -10,7 +10,7 @@ const departmentRouter = require('./router/department.router');
 const staffRouter = require('./router/staff.router');
 const scheduleRouter = require('./router/schedule.router');
 const adminRouter = require('./router/admin.router');
-const doctorRouter = require('./router/doctor.router'); // ✅ ADDED
+ 
 const diagnosisRouter = require('./router/diagnosis.router');
 
 const app = express();
