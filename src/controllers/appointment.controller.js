@@ -19,6 +19,9 @@ exports.createAppointment = async (req, res) => {
       return res.status(400).json({ error: 'Invalid email address.' });
     }
 
+    // Normalize email to lowercase for consistency
+    patientDetails.email = patientDetails.email.toLowerCase().trim();
+
     // Check if time slot is already booked
     const existing = await Appointment.findOne({ 
       doctorId, 
@@ -64,12 +67,40 @@ exports.getAllAppointments = async (req, res) => {
   }
 };
 
-// Get appointments by patient email
+// Get appointments by patient ID (UPDATED - now uses patientId instead of email)
 exports.getAppointmentsByPatient = async (req, res) => {
   try {
-    const { email } = req.params;
+    const { patientId } = req.params;
+
+    if (!patientId) {
+      return res.status(400).json({ error: 'Patient ID is required.' });
+    }
+
     const appointments = await Appointment.find({ 
-      'patientDetails.email': email 
+      patientId: patientId 
+    }).sort({ date: 1, timeSlot: 1 });
+    
+    res.status(200).json({ appointments });
+  } catch (err) {
+    console.error('Error fetching appointments:', err);
+    res.status(500).json({ error: 'Server error while fetching appointments.' });
+  }
+};
+
+// OPTIONAL: Keep this as backup if you still want to search by email
+exports.getAppointmentsByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    // Normalize email to lowercase
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const appointments = await Appointment.find({ 
+      'patientDetails.email': normalizedEmail 
     }).sort({ date: 1, timeSlot: 1 });
     
     res.status(200).json({ appointments });
@@ -83,6 +114,11 @@ exports.getAppointmentsByPatient = async (req, res) => {
 exports.getAppointmentsByDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
+
+    if (!doctorId) {
+      return res.status(400).json({ error: 'Doctor ID is required.' });
+    }
+
     const appointments = await Appointment.find({ doctorId }).sort({ date: 1, timeSlot: 1 });
     res.status(200).json({ appointments });
   } catch (err) {
