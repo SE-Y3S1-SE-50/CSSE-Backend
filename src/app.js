@@ -11,6 +11,8 @@ const departmentRouter = require('./router/department.router');
 const staffRouter = require('./router/staff.router');
 const scheduleRouter = require('./router/schedule.router');
 const adminRouter = require('./router/admin.router');
+ 
+const diagnosisRouter = require('./router/diagnosis.router');
 
 // Import payment-related routers
 const paymentRoutes = require('./routes/paymentRoutes');
@@ -58,6 +60,33 @@ app.use('/api/department', departmentRouter);
 app.use('/api/staff', staffRouter);
 app.use('/api/schedule', scheduleRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/doctor', doctorRouter); // ✅ ADDED
+app.use('/api/diagnosis', diagnosisRouter);
+
+// Auth helpers (root level)
+app.get('/check-cookie', (req, res) => {
+  try {
+    const token = req.cookies?.token;
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return res.json({ role: decoded.role, id: decoded.id });
+  } catch (err) {
+    console.error('Error verifying token:', err.message);
+    return res.status(401).json({ message: 'Unauthorized: Invalid or expired token' });
+  }
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+  res.json({ message: 'Logged out successfully!' });
+});
 
 // Payment-related routes
 app.use('/api/payments', paymentRoutes);
