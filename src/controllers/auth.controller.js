@@ -1,3 +1,5 @@
+// src/controllers/auth.controller.js - FIXED VERSION
+
 const User = require('../models/users.model');
 const Patient = require('../models/patient.model');
 const Doctor = require('../models/doctor.model');
@@ -5,10 +7,121 @@ const Admin = require('../models/admin.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// ==================== UNIFIED LOGIN ====================
+const login = async (req, res) => {
+  try {
+    const { userName, password } = req.body;
+
+    // Validation
+    if (!userName || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
+    console.log("Login attempt for userName:", userName);
+
+    // Find user by userName (case-insensitive)
+    const user = await User.findOne({ 
+      userName: { $regex: new RegExp(`^${userName}$`, 'i') }
+    });
+    
+    if (!user) {
+      console.log('User not found:', userName);
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    console.log('User found:', { id: user._id, role: user.role });
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      console.log('Password mismatch for user:', userName);
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Check if user is active (for doctors and admins)
+    let entityDetails = null;
+    let isActive = true;
+
+    try {
+      switch (user.role) {
+        case 'Patient':
+          entityDetails = await Patient.findById(user.entityId)
+            .select('firstName lastName email phoneNumber gender');
+          break;
+        case 'Doctor':
+          entityDetails = await Doctor.findById(user.entityId)
+            .select('firstName lastName email phoneNumber gender department specialization doctorId isActive');
+          isActive = entityDetails?.isActive !== false;
+          break;
+        case 'Admin':
+          entityDetails = await Admin.findById(user.entityId)
+            .select('firstName lastName email phoneNumber position permissions isActive');
+          isActive = entityDetails?.isActive !== false;
+          break;
+        default:
+          console.warn('Unknown role:', user.role);
+      }
+
+      if (!entityDetails) {
+        console.error('Entity details not found for user:', user._id);
+        return res.status(404).json({ message: 'User profile not found. Please contact support.' });
+      }
+
+      if (!isActive) {
+        console.log('Inactive user attempted login:', user._id);
+        return res.status(403).json({ message: 'Your account has been deactivated. Please contact support.' });
+      }
+
+    } catch (err) {
+      console.error('Error fetching entity details:', err);
+      return res.status(500).json({ message: 'Error retrieving user profile' });
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+        entityId: user.entityId
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Set HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000  // 24 hours
+    });
+
+    console.log('Login successful for:', userName);
+
+    // Return success response
+    return res.status(200).json({
+      message: "Login successful",
+      role: user.role,              
+      userId: user._id,
+      entityId: user.entityId,
+      user: {
+        firstName: entityDetails.firstName || 'User',
+        lastName: entityDetails.lastName || '',
+        email: entityDetails.email || userName
+      }
+    });
+
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ message: 'Server error during login' });
+  }
+};
+
 // ==================== PATIENT REGISTRATION ====================
 const httpRegisterPatient = async (req, res) => {
   try {
-    const { firstName, lastName, email, phoneNumber, password, gender } = req.body;
+    const { firstName, lastName, email, phoneNumber, password, gender, userName } = req.body;
     
     // Validate required fields
     if (!firstName || !lastName || !email || !phoneNumber || !password || !gender) {
@@ -28,14 +141,22 @@ const httpRegisterPatient = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters long' });
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if email already exists in Patient
-    const existingPatient = await Patient.findOne({ email });
+    const existingPatient = await Patient.findOne({ 
+      email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') }
+    });
     if (existingPatient) {
       return res.status(409).json({ message: 'Patient with this email already exists' });
     }
 
     // Check if userName (email) already exists in User
-    const existingUser = await User.findOne({ userName: email });
+    const userNameToUse = userName || normalizedEmail;
+    const existingUser = await User.findOne({ 
+      userName: { $regex: new RegExp(`^${userNameToUse}$`, 'i') }
+    });
     if (existingUser) {
       return res.status(409).json({ message: 'User account with this email already exists' });
     }
@@ -44,21 +165,25 @@ const httpRegisterPatient = async (req, res) => {
     const patient = new Patient({
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       phoneNumber,
       gender
     });
     await patient.save();
+    console.log('Patient created with ID:', patient._id);
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create User account linked to Patient
-    const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
-      userName: email,
+      userName: userNameToUse,
       password: hashedPassword,
       entityId: patient._id,
       role: 'Patient'
     });
     await user.save();
+    console.log('User created with ID:', user._id);
 
     res.status(201).json({ 
       message: 'Patient registered successfully',
@@ -89,7 +214,8 @@ const httpRegisterDoctor = async (req, res) => {
       department,
       specialization,
       availableTimeSlots,
-      workingDays
+      workingDays,
+      userName
     } = req.body;
     
     // Validate required fields
@@ -118,14 +244,22 @@ const httpRegisterDoctor = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters long' });
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if email already exists in Doctor
-    const existingDoctor = await Doctor.findOne({ email });
+    const existingDoctor = await Doctor.findOne({ 
+      email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') }
+    });
     if (existingDoctor) {
       return res.status(409).json({ message: 'Doctor with this email already exists' });
     }
 
     // Check if userName (email) already exists in User
-    const existingUser = await User.findOne({ userName: email });
+    const userNameToUse = userName || normalizedEmail;
+    const existingUser = await User.findOne({ 
+      userName: { $regex: new RegExp(`^${userNameToUse}$`, 'i') }
+    });
     if (existingUser) {
       return res.status(409).json({ message: 'User account with this email already exists' });
     }
@@ -140,7 +274,7 @@ const httpRegisterDoctor = async (req, res) => {
     const doctor = new Doctor({
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       phoneNumber,
       gender,
       doctorId,
@@ -151,16 +285,20 @@ const httpRegisterDoctor = async (req, res) => {
       isActive: true
     });
     await doctor.save();
+    console.log('Doctor created with ID:', doctor._id);
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create User account linked to Doctor
-    const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
-      userName: email,
+      userName: userNameToUse,
       password: hashedPassword,
       entityId: doctor._id,
       role: 'Doctor'
     });
     await user.save();
+    console.log('User created with ID:', user._id);
 
     res.status(201).json({ 
       message: 'Doctor registered successfully',
@@ -189,7 +327,8 @@ const httpRegisterAdmin = async (req, res) => {
       phoneNumber, 
       password,
       position,
-      permissions
+      permissions,
+      userName
     } = req.body;
 
     // Validate required fields
@@ -210,14 +349,22 @@ const httpRegisterAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters long' });
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if email already exists in Admin
-    const existingAdmin = await Admin.findOne({ email });
+    const existingAdmin = await Admin.findOne({ 
+      email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') }
+    });
     if (existingAdmin) {
       return res.status(409).json({ message: 'Admin with this email already exists' });
     }
 
     // Check if userName (email) already exists in User
-    const existingUser = await User.findOne({ userName: email });
+    const userNameToUse = userName || normalizedEmail;
+    const existingUser = await User.findOne({ 
+      userName: { $regex: new RegExp(`^${userNameToUse}$`, 'i') }
+    });
     if (existingUser) {
       return res.status(409).json({ message: 'User account with this email already exists' });
     }
@@ -226,23 +373,27 @@ const httpRegisterAdmin = async (req, res) => {
     const admin = new Admin({
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       phoneNumber,
       position: position || 'Healthcare Manager',
       permissions: permissions || ['schedule_staff', 'manage_staff', 'view_reports', 'manage_departments'],
       isActive: true
     });
     await admin.save();
+    console.log('Admin created with ID:', admin._id);
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create User account linked to Admin
-    const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
-      userName: email,
+      userName: userNameToUse,
       password: hashedPassword,
       entityId: admin._id,
       role: 'Admin'
     });
     await user.save();
+    console.log('User created with ID:', user._id);
 
     res.status(201).json({ 
       message: 'Admin registered successfully',
@@ -283,14 +434,14 @@ const httpUpdatePatient = async (req, res) => {
 
     if (firstName) patient.firstName = firstName;
     if (lastName) patient.lastName = lastName;
-    if (email) patient.email = email;
+    if (email) patient.email = email.toLowerCase().trim();
     if (phoneNumber) patient.phoneNumber = phoneNumber;
     if (gender) patient.gender = gender;
 
     await patient.save();
 
     // Update User record
-    if (userName) patientUser.userName = userName;
+    if (userName) patientUser.userName = userName.toLowerCase().trim();
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       patientUser.password = hashedPassword;
@@ -348,7 +499,7 @@ const httpUpdateDoctor = async (req, res) => {
 
     if (firstName) doctor.firstName = firstName;
     if (lastName) doctor.lastName = lastName;
-    if (email) doctor.email = email;
+    if (email) doctor.email = email.toLowerCase().trim();
     if (phoneNumber) doctor.phoneNumber = phoneNumber;
     if (gender) doctor.gender = gender;
     if (department) doctor.department = department;
@@ -359,7 +510,7 @@ const httpUpdateDoctor = async (req, res) => {
     await doctor.save();
 
     // Update User record
-    if (userName) doctorUser.userName = userName;
+    if (userName) doctorUser.userName = userName.toLowerCase().trim();
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       doctorUser.password = hashedPassword;
@@ -415,7 +566,7 @@ const httpUpdateAdmin = async (req, res) => {
 
     if (firstName) admin.firstName = firstName;
     if (lastName) admin.lastName = lastName;
-    if (email) admin.email = email;
+    if (email) admin.email = email.toLowerCase().trim();
     if (phoneNumber) admin.phoneNumber = phoneNumber;
     if (position) admin.position = position;
     if (permissions) admin.permissions = permissions;
@@ -423,7 +574,7 @@ const httpUpdateAdmin = async (req, res) => {
     await admin.save();
 
     // Update User record
-    if (userName) adminUser.userName = userName;
+    if (userName) adminUser.userName = userName.toLowerCase().trim();
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       adminUser.password = hashedPassword;
@@ -488,94 +639,6 @@ const httpGetAllUsers = async (req, res) => {
   } catch (err) {
     console.error("Error in getting all users", err);
     return res.status(500).json({ message: err.message || 'Error fetching users' });
-  }
-};
-
-// ==================== UNIFIED LOGIN ====================
-const login = async (req, res) => {
-  try {
-    const { userName, password } = req.body;
-
-    if (!userName || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
-    }
-
-    console.log("Login attempt for userName:", userName);
-
-    // Find user by userName (which should be the email)
-    const user = await User.findOne({ userName: userName.toLowerCase().trim() });
-    
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-
-    console.log('User found:', { id: user._id, role: user.role });
-
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-
-    // Fetch entity details based on role
-    let entityDetails = null;
-    try {
-      switch (user.role) {
-        case 'Patient':
-          entityDetails = await Patient.findById(user.entityId)
-            .select('firstName lastName email phoneNumber gender');
-          break;
-        case 'Doctor':
-          entityDetails = await Doctor.findById(user.entityId)
-            .select('firstName lastName email phoneNumber gender department specialization doctorId');
-          break;
-        case 'Admin':
-          entityDetails = await Admin.findById(user.entityId)
-            .select('firstName lastName email phoneNumber position permissions');
-          break;
-        default:
-          console.warn('Unknown role:', user.role);
-      }
-    } catch (err) {
-      console.error('Error fetching entity details:', err);
-    }
-
-    // Create JWT token
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-        entityId: user.entityId
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    // Set HTTP-only cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 24 * 60 * 60 * 1000  
-    });
-
-    // Return success response
-    return res.status(200).json({
-      message: "Login successful",
-      role: user.role,              
-      userId: user._id,
-      entityId: user.entityId,
-      user: entityDetails || {
-        firstName: 'User',
-        lastName: '',
-        email: userName
-      }
-    });
-
-  } catch (err) {
-    console.error("Login error:", err);
-    return res.status(500).json({ message: 'Server error during login' });
   }
 };
 
