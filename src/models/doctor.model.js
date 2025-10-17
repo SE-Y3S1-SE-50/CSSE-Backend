@@ -23,7 +23,31 @@ const DoctorSchema = new mongoose.Schema({
     },
     createdTimestamp: {
         type: Date,
-        default: Date.now  // ✅ FIXED: Changed from Date.now() to Date.now
+        default: Date.now
+    },
+    // New fields for appointment system
+    doctorId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    department: {
+        type: String,
+        required: true
+    },
+    specialization: {
+        type: String,
+        default: ''
+    },
+    availableTimeSlots: [{
+        type: String
+    }],
+    workingDays: [{
+        type: String
+    }],
+    isActive: {
+        type: Boolean,
+        default: true
     }
 });
 
