@@ -1,32 +1,58 @@
+const express = require('express');
 const {
-    login, 
-    httpRegisterDoctor,
-    httpRegisterPatient,
-    httpRegisterAdmin,
-    httpGetAllUsers,
-    httpUpdatePatient,
-    httpUpdateDoctor,
-    httpUpdateAdmin
+  login,
+  httpRegisterDoctor,
+  httpRegisterPatient,
+  httpRegisterAdmin,
+  httpGetAllUsers,
+  httpUpdatePatient,
+  httpUpdateDoctor,
+  httpUpdateAdmin
 } = require('../controllers/auth.controller');
 
-const express = require('express');
+const {
+  getPaymentRequests,
+  updatePaymentStatus,
+  getHealthcareCoverage,
+  updateCoverageStatus,
+  getAllAdmins,
+  getAdminById,
+  deleteAdmin
+} = require('../controllers/admin.controller');
 
-const Userrouter = express.Router();
+// ============================================
+// USER & ADMIN ROUTER
+// ============================================
+
+const userAdminRouter = express.Router();
 
 // ==================== LOGIN ====================
-Userrouter.post('/login', login);
+userAdminRouter.post('/login', login);
 
-// ==================== REGISTRATION ROUTES ====================
-Userrouter.post('/register/patient', httpRegisterPatient);
-Userrouter.post('/register/doctor', httpRegisterDoctor);
-Userrouter.post('/register/admin', httpRegisterAdmin);
+// ==================== USER REGISTRATION ROUTES ====================
+userAdminRouter.post('/register/patient', httpRegisterPatient);
+userAdminRouter.post('/register/doctor', httpRegisterDoctor);
+userAdminRouter.post('/register/admin', httpRegisterAdmin);
 
-// ==================== UPDATE ROUTES ====================
-Userrouter.put('/update/patient', httpUpdatePatient);
-Userrouter.put('/update/doctor', httpUpdateDoctor);
-Userrouter.put('/update/admin', httpUpdateAdmin);
+// ==================== USER UPDATE ROUTES ====================
+userAdminRouter.put('/update/patient', httpUpdatePatient);
+userAdminRouter.put('/update/doctor', httpUpdateDoctor);
+userAdminRouter.put('/update/admin', httpUpdateAdmin);
 
 // ==================== GET ALL USERS ====================
-Userrouter.get('/', httpGetAllUsers);
+userAdminRouter.get('/', httpGetAllUsers);
 
-module.exports = Userrouter;
+// ==================== ADMIN MANAGEMENT ROUTES ====================
+userAdminRouter.get('/admin', getAllAdmins);
+userAdminRouter.get('/admin/:id', getAdminById);
+userAdminRouter.delete('/admin/:id', deleteAdmin);
+
+// ==================== PAYMENT MANAGEMENT ROUTES ====================
+userAdminRouter.get('/admin/payments', getPaymentRequests);
+userAdminRouter.put('/admin/payments/status', updatePaymentStatus);
+
+// ==================== HEALTHCARE COVERAGE ROUTES ====================
+userAdminRouter.get('/admin/coverage', getHealthcareCoverage);
+userAdminRouter.put('/admin/coverage/status', updateCoverageStatus);
+
+module.exports = userAdminRouter;
