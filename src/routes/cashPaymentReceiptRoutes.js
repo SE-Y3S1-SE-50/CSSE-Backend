@@ -1,10 +1,10 @@
-import express from 'express';
-import {
+const express = require('express');
+const {
   submitCashPaymentReceipt,
   getUserCashPaymentReceipts,
   getAllCashPaymentReceipts,
   updateCashPaymentReceiptStatus
-} from '../controllers/cashPaymentReceipt.controller';
+} = require('../controllers/cashPaymentReceipt.controller');
 
 const router = express.Router();
 
@@ -20,4 +20,4 @@ router.get('/admin/all', getAllCashPaymentReceipts);
 // Admin: Update cash payment receipt status
 router.put('/admin/status', updateCashPaymentReceiptStatus);
 
-export default router;
+module.exports = router;

@@ -1,9 +1,8 @@
-import { Request, Response } from 'express';
-import CoverageApplication from '../models/CoverageApplication';
-import User from '../models/users.model';
+const CoverageApplication = require('../models/CoverageApplication');
+const User = require('../models/users.model');
 
 // Apply for healthcare coverage
-export const applyForCoverage = async (req: Request, res: Response) => {
+const applyForCoverage = async (req, res) => {
   try {
     const { userId, policyId, provider, coverageType } = req.body;
 
@@ -47,8 +46,8 @@ export const applyForCoverage = async (req: Request, res: Response) => {
     // Create new coverage application
     const coverageApplication = new CoverageApplication({
       userId,
-      patientName: user.userName, // You can enhance this with actual patient details
-      patientEmail: (user as any).email || 'Not provided',
+      patientName: user.userName,
+      patientEmail: user.email || 'Not provided',
       policyId,
       provider,
       coverageType,
@@ -66,7 +65,7 @@ export const applyForCoverage = async (req: Request, res: Response) => {
         applicationDate: coverageApplication.applicationDate
       }
     });
-  } catch (err: any) {
+  } catch (err) {
     console.log("Error applying for coverage", err);
     return res.status(500).json({
       success: false,
@@ -76,11 +75,11 @@ export const applyForCoverage = async (req: Request, res: Response) => {
 };
 
 // Get user's coverage application status
-export const getCoverageStatus = async (req: Request, res: Response) => {
+const getCoverageStatus = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Validate userId format (should be a valid MongoDB ObjectId)
+    // Validate userId format
     if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
@@ -111,7 +110,7 @@ export const getCoverageStatus = async (req: Request, res: Response) => {
         approvedDate: application.approvedDate
       }
     });
-  } catch (err: any) {
+  } catch (err) {
     console.log("Error getting coverage status", err);
     return res.status(500).json({
       success: false,
@@ -121,7 +120,7 @@ export const getCoverageStatus = async (req: Request, res: Response) => {
 };
 
 // Get all coverage applications for admin
-export const getAllCoverageApplications = async (req: Request, res: Response) => {
+const getAllCoverageApplications = async (req, res) => {
   try {
     const applications = await CoverageApplication.find()
       .populate('userId', 'userName firstName lastName email phoneNumber')
@@ -146,7 +145,7 @@ export const getAllCoverageApplications = async (req: Request, res: Response) =>
       success: true,
       data: applicationList
     });
-  } catch (err: any) {
+  } catch (err) {
     console.log("Error getting coverage applications", err);
     return res.status(500).json({
       success: false,
@@ -156,7 +155,7 @@ export const getAllCoverageApplications = async (req: Request, res: Response) =>
 };
 
 // Update coverage application status (admin only)
-export const updateCoverageStatus = async (req: Request, res: Response) => {
+const updateCoverageStatus = async (req, res) => {
   try {
     const { applicationId, status, adminNotes, approvedBy } = req.body;
 
@@ -175,7 +174,7 @@ export const updateCoverageStatus = async (req: Request, res: Response) => {
       });
     }
 
-    const updateData: any = {
+    const updateData = {
       status,
       adminNotes: adminNotes || ''
     };
@@ -209,11 +208,18 @@ export const updateCoverageStatus = async (req: Request, res: Response) => {
         approvedDate: application.approvedDate
       }
     });
-  } catch (err: any) {
+  } catch (err) {
     console.log("Error updating coverage status", err);
     return res.status(500).json({
       success: false,
       message: err.message || 'Error updating coverage status'
     });
   }
+};
+
+module.exports = {
+  applyForCoverage,
+  getCoverageStatus,
+  getAllCoverageApplications,
+  updateCoverageStatus
 };

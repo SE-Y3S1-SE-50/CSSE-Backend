@@ -1,15 +1,19 @@
-import { Router } from 'express';
-import { PaymentController } from '../controllers/PaymentController';
+const express = require('express');
+const { 
+  processPayment, 
+  getPaymentsByUserId, 
+  verifyCashPayment 
+} = require('../controllers/PaymentController');
 
-const router = Router();
+const router = express.Router();
 
 // POST /api/payments - Process a new payment
-router.post('/', PaymentController.processPayment);
+router.post('/', processPayment);
 
 // GET /api/payments/user - Get payments by user ID
-router.get('/user', PaymentController.getPaymentsByUserId);
+router.get('/user', getPaymentsByUserId);
 
 // PUT /api/payments/verify - Verify cash payment (Admin action)
-router.put('/verify', PaymentController.verifyCashPayment);
+router.put('/verify', verifyCashPayment);
 
-export default router;
+module.exports = router;

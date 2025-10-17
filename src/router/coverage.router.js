@@ -1,10 +1,10 @@
-import express from 'express';
-import {
+const express = require('express');
+const {
   applyForCoverage,
   getCoverageStatus,
   getAllCoverageApplications,
   updateCoverageStatus
-} from '../controllers/coverage.controller';
+} = require('../controllers/coverage.controller');
 
 const coverageRouter = express.Router();
 
@@ -16,4 +16,4 @@ coverageRouter.get('/status/:userId', getCoverageStatus);
 coverageRouter.get('/admin/applications', getAllCoverageApplications);
 coverageRouter.put('/admin/status', updateCoverageStatus);
 
-export default coverageRouter;
+module.exports = coverageRouter;

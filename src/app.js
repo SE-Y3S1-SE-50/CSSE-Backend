@@ -2,6 +2,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const jwt = require("jsonwebtoken");
 
+// Import routers
 const appointmentRouter = require('./router/appointment.router');
 const userRouter = require('./router/auth.router');
 const patientRouter = require('./router/patient.router');
@@ -10,6 +11,11 @@ const departmentRouter = require('./router/department.router');
 const staffRouter = require('./router/staff.router');
 const scheduleRouter = require('./router/schedule.router');
 const adminRouter = require('./router/admin.router');
+
+// Import payment-related routers
+const paymentRoutes = require('./routes/paymentRoutes');
+const coverageRoutes = require('./router/coverage.router');
+const cashPaymentReceiptRoutes = require('./routes/cashPaymentReceiptRoutes');
 
 const app = express();
 
@@ -43,7 +49,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
+// Routes - Main API
 app.use('/api/appointment', appointmentRouter);
 app.use('/api/user', userRouter);
 app.use('/api/patient', patientRouter);
@@ -52,6 +58,11 @@ app.use('/api/department', departmentRouter);
 app.use('/api/staff', staffRouter);
 app.use('/api/schedule', scheduleRouter);
 app.use('/api/admin', adminRouter);
+
+// Payment-related routes
+app.use('/api/payments', paymentRoutes);
+app.use('/api/coverage', coverageRoutes);
+app.use('/api/cash-receipts', cashPaymentReceiptRoutes);
 
 // Auth helpers - moved to /api prefix for consistency
 app.get('/api/check-cookie', (req, res) => {
@@ -80,11 +91,40 @@ app.post('/api/logout', (req, res) => {
 
 // Root routes
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Doctor Booking API!' });
+  res.json({ 
+    message: 'Welcome to Doctor Booking API!',
+    status: 'OK',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get('/api', (req, res) => {
-  res.json({ message: 'Doctor Booking API is running!' });
+  res.json({ 
+    message: 'Doctor Booking API is running!',
+    version: '1.0.0',
+    endpoints: {
+      appointments: '/api/appointment',
+      users: '/api/user',
+      patients: '/api/patient',
+      doctors: '/api/doctor',
+      departments: '/api/department',
+      staff: '/api/staff',
+      schedules: '/api/schedule',
+      admin: '/api/admin',
+      payments: '/api/payments',
+      coverage: '/api/coverage',
+      cashReceipts: '/api/cash-receipts'
+    }
+  });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 // 404 handler
